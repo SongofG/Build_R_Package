@@ -1,0 +1,102 @@
+---
+title: "Introduction to PMPark Package"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+Hello! Welcome to PMPark Package! PMPark is a R package based on a statistic research paper published by Pei-Fen Kuan and Bo Huang, suggesting few solutions for testing partially matched sample (I will discuss what "partially matched sample" is soon). If you are interested in knowing more about this package in detail, please click [this link.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3717400/)
+
+This package is basically a implementation of the research paper. This package can be a possible remedy for partially matched sample. A variety of p-value pooling approaches are implemented to deal with partially matched samples.
+
+Without further ado, let's get into examples and how to use the testing methods in this package!
+
+## Examples
+
+Before getting into the methods, like I told you above, Let me tell you what I meant by **partially matched sample**.
+Consider the following example:
+```{r partially matched sample}
+set.seed(123)
+x <- rnorm(20)
+y <- rnorm(20) + 2
+x[c(1,5,8)] <- NA
+y[c(2,13,19,20)] <- NA
+data.frame(x,y)
+```
+
+Suppose `x` is some sort of testing result from patients with tumor and `y` is the same testing result from normal controlled group of people. A **partially matched Sample** is like the table above. Although what we want is perfectlly matched samples, there could be some missing values in real life.
+
+There are three types of number of samples in the partially matched samples. We will continue to use the same tumor paitient and normal people example:
+```{r n1, n2, and n3}
+n1 <- length(which(!is.na(x)&!is.na(y)))
+n2 <- length(which(!is.na(x)&is.na(y)))
+n3 <- length(which(is.na(x)&!is.na(y)))
+data.frame(n1,n2,n3)
+```
+
+* `n1`: The number of completely matched pair of tumor paitient and normal people
+
+* `n2`: The number of pairs that the testing result of a tumor paitient exists
+        but of a normal person is missing
+
+* `n3`: The number of pairs that the testing result of a normal person exists
+        but of a tumor paitient is missing
+        
+Note that this package is sensitive to the existence of n1, n2, and n3. If the either of n1, n2, or n3 is missing, the implemented tests will automatically conduct `t.test()`, according to what number is missing. If you want to get p-value from specific methods in this package, not the basic R built-in `t.test()`, you should check for n1, n2, and n3.
+
+Right. Now, let's see the actually usage of the methods in this `PMPark` package. There are five methods in this package:
+
+* `weighted.z.test(x,y,alternative="two.sided")`
+
+* `modified.t.test(x,y,alternative="two.sided")`
+
+* `corrected.z.test(x,y,alternative="two.sided")`
+
+* `lin.stiver.test(x,y,alternative="two.sided")`
+
+* `ekbohm.test(x,y,alternative="two.sided")`
+
+All the methods have the same structure. Three arguments are needed to conduct the tests, and `alternative` is set to `"two.sided"` as its default.
+This package assumes the mean difference to be 0 as the null hypothesis of the tests.
+
+Since the usage of the methods are exactly to same, for this vignette, I will use `weighted.z.test(x,y,alternative="two.sided")` to give simple tutorial on how to use this package.
+
+### Two Sided Testing
+
+Let's call the package first.
+
+```{r calling package}
+library(PMPark)
+```
+
+This is how our data looks like.
+
+```{r data representation}
+data.frame(x,y)
+```
+
+Now. Let's run the test!
+
+```{r two sided testing}
+weighted.z.test(x,y)
+```
+        
+Although there is no explict argument passing for `alternative`, since the default value is set to be "two.sided", the method conducted two sided test.
+
+### One Sided Testing: "less"
+
+```{r one sided testing: less}
+weighted.z.test(x,y,alternative="less")
+```
+
+Note that the `alternative` argument is passed for this one sided testing.
+P-value is larger than 0.05 so, again, we cannot reject the null hypothesis.
+
+### One Sided Testing: "greater"
+
+```{r one sided testing: "greater"}
+weighted.z.test(x,y,alternative="greater")
+```
+
+Other methods like `modified.t.test()`, `corrected.z.test()`, `lin.stiver.test()`, and `ekbohm.test()` are the same in terms of the usage.
